@@ -16,7 +16,6 @@ public:
 	{
 		printf("Basic");
 	}
-
 };
 
 class First : public Basic //первый потомок базового класса
@@ -40,11 +39,6 @@ public:
 	void foo() override
 	{
 		printf("First options: %d,%d\n",x,y);
-	}
-	
-	~First()
-	{
-		printf("delete First");
 	}
 };
 class Second : public Basic //второй потомок базового класса
@@ -89,7 +83,7 @@ public:
 		head->next = NULL; // указатель на следующий узел
 		head->prev = NULL; // указатель на предыдущий узел
 	}
-	void addObj(Basic* obj)
+	void addToHead(Basic* obj)
 	{
 		struct SList* temp, * p;
 		temp = (struct SList*)malloc(sizeof(SList)); //выделение памяти для temp
@@ -101,28 +95,94 @@ public:
 		if (p != NULL)
 			p->prev = temp;
 	}
-	void deleteObj(int index)
+	void addObj(Basic* obj,int index) //добавление объекта в список
+	{
+		if (index != 0) {
+			struct SList* Sprev, * Snext;
+			Sprev = head->prev; // узел, предшествующий head
+			Snext = head->next; // узел, следующий за head
+			for (int i = 1; i < index; i++)
+			{
+				if (Snext != NULL)
+				{
+					Sprev = Snext->prev; //двигаемся вперед по списку
+					Snext = Snext->next;
+				}
+			}
+			if (Sprev != NULL && Snext == NULL) //если удаляется не корень списка
+			{
+				struct SList* temp;
+				temp = (struct SList*)malloc(sizeof(SList));
+				Sprev->next->next = temp; // предыдущий узел указывает на создаваемый
+				temp->cobj = obj; // сохранение поля данных добавляемого узла
+				temp->next = Snext; // созданный узел указывает на следующий узел
+				temp->prev = Sprev->next; // созданный узел указывает на предыдущий узел
+			}
+			else if(Sprev != NULL && Snext != NULL)
+			{
+				struct SList* temp;
+				temp = (struct SList*)malloc(sizeof(SList));
+				Sprev->next = temp; // предыдущий узел указывает на создаваемый
+				temp->cobj = obj; // сохранение поля данных добавляемого узла
+				temp->next = Snext->prev; // созданный узел указывает на следующий узел
+				temp->prev = Sprev; // созданный узел указывает на предыдущий узел
+				Snext->prev->prev = temp;
+			}
+			else //удаляется корень списка
+			{
+				addToHead(obj);
+			}
+		}	
+	}
+	void deleteObj(int index) //удаление объекта из списка
+	{
+		if (index != 0) {
+			struct SList* Sprev, * Snext;
+			Sprev = head->prev; // узел, предшествующий head
+			Snext = head->next; // узел, следующий за head
+			for (int i = 1; i < index; i++)
+			{
+				if (Snext != NULL)
+				{
+					Sprev = Snext->prev; //двигаемся вперед по списку
+					Snext = Snext->next;
+				}
+			}
+			if (Sprev != NULL) //если удаляется не корень списка
+			{
+				struct SList* temp;
+				temp = Sprev->next;
+				if (Sprev != NULL)
+					Sprev->next = Snext; // переставляем указатель
+				if (Snext != NULL)
+					Snext->prev = Sprev; // переставляем указатель
+				delete temp->cobj;
+				free(temp);
+			}
+			else //удаляется корень списка
+			{
+				struct SList* temp;
+				temp = head->next;
+				delete head->cobj;
+				free(head);   // освобождение памяти текущего корня
+				head = temp;
+			}
+		}
+	}
+	Basic* getObject(int index)
 	{
 		struct SList* Sprev, * Snext;
 		Sprev = head->prev; // узел, предшествующий head
 		Snext = head->next; // узел, следующий за head
-		for (int i = 0; i < (index - 1); i++)
+		for (int i = 1; i < index; i++)
 		{
 			if (Snext != NULL)
 			{
-				Sprev = Snext->prev;
+				Sprev = Snext->prev; //двигаемся вперед по списку
 				Snext = Snext->next;
 			}
 		}
-		
-		struct SList* temp;
-		temp = Sprev->next;
-		if (Sprev != NULL)
-			Sprev->next = Snext; // переставляем указатель
-		if (Snext != NULL)
-			Snext->prev = Sprev; // переставляем указатель
-		delete temp->cobj;
-		free(temp);
+		return Snext->prev->cobj;
 	}
 	void printlist()
 	{
@@ -132,21 +192,33 @@ public:
 			temp->cobj->foo();
 			temp = temp->next;
 		} while (temp != NULL); // условие окончания обхода
+	
 	}
 };
 
 void main()
 {
 	setlocale(LC_ALL, "RU");
-	MyStorage storage(new First());
-	for (int i = 1; i < 10; i++) 
+	MyStorage storage(new Second());
+	for (int i = 1; i < 4; i++) 
 	{
-		storage.addObj(new First);
+		storage.addObj(new First,i);
 	}
 	storage.printlist();
 	printf("\n");
-	storage.deleteObj(3);
+	for(int i = 5;i<10;i++)
+	{
+		storage.addObj(new Second,i);
+	}
 	storage.printlist();
+	storage.deleteObj(5);
+	printf("\n");
+	storage.printlist();
+	storage.deleteObj(1);
+	storage.addObj(new First,7);
+	printf("\n");
+	storage.printlist();
+
 	/*for (int i = 0; !storage.eol(); storage.next())
 		storage.getObject().someMethod();*/
-}
+ }
