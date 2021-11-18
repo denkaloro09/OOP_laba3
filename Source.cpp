@@ -1,69 +1,76 @@
-#include <iostream>
+﻿#include <iostream>
 #include <conio.h>
 using namespace std;
 
-class Shape 
+struct SList
+{
+	class Basic* cobj;
+	struct SList* next;
+	struct SList* prev;
+};
+
+class Basic //базовый абстрактный класс
 {
 public: 
-	virtual void draw()
+	virtual void foo() 
 	{
-		printf("��������� ������");
-	}
-	~Shape()
-	{
-		printf("�������� ������");
+		printf("Basic");
 	}
 
 };
 
-class Point : public Shape
+class First : public Basic //первый потомок базового класса
 {
 protected:
 	int x, y;
 public:
-	Point()
+	First()
 	{
 		x = 0; y = 0;
 	}
-	Point(int x,int y)
+	First(int x,int y)
 	{
 		this->x = x;
 		this->y = y;
 	}
-
-	void draw() override
+	int getOptions()
 	{
-		printf("���������� ����� - %d,%d\n",x,y);
+		return x, y;
+	}
+	void foo() override
+	{
+		printf("First options: %d,%d\n",x,y);
 	}
 	
-	~Point()
+	~First()
 	{
-		printf("�������� �����");
+		printf("delete First");
 	}
 };
-class Section : public Shape
+class Second : public Basic //второй потомок базового класса
 {
 protected:
-	Point* p1;
-	Point* p2;
+	First* p1;
+	First* p2;
 public:
-	Section()
+	Second()
 	{
-		
+		p1 = new First();
+		p2 = new First();
 	}
-	Section(int x1,int y1,int x2,int y2)
+	Second(int x1,int y1,int x2,int y2)
 	{
-		p1 = new Point(x1, y1);
-		p2 = new Point(x2, y2);
+		p1 = new First(x1, y1);
+		p2 = new First(x2, y2);
 	}
 
-	void draw() override
+	void foo() override
 	{
-		printf("�������");
+		printf("отрезок\n");
 	}
-	~Section()
+	~Second()
 	{
-		printf("�������� �������");
+		printf("удаление отрезка");
 		delete p1;
 		delete p2;
 	}
@@ -72,37 +79,74 @@ public:
 class MyStorage
 {
 private:
-	Shape** objs;
-	int size;
+	SList* head;
 public:
-	MyStorage(int size)
+	MyStorage(Basic* obj) //конструктор
 	{
-		this->size = size;
-		objs = new Shape * [size];
+		// выделение памяти под корень списка
+		head = (struct SList*)malloc(sizeof(struct SList));
+		head->cobj = obj;
+		head->next = NULL; // указатель на следующий узел
+		head->prev = NULL; // указатель на предыдущий узел
 	}
-	void setObject(int i,Shape *obj)
+	void addObj(Basic* obj)
 	{
-		objs[i] = obj;
+		struct SList* temp, * p;
+		temp = (struct SList*)malloc(sizeof(SList)); //выделение памяти для temp
+		p = head->next; // сохранение указателя на следующий узел
+		head->next = temp; // предыдущий узел указывает на создаваемый
+		temp->cobj = obj; // сохранение поля данных добавляемого узла
+		temp->next = p; // созданный узел указывает на следующий узел
+		temp->prev = head; // созданный узел указывает на предыдущий узел
+		if (p != NULL)
+			p->prev = temp;
 	}
-	Shape& getObject(int i)
+	void deleteObj(int index)
 	{
-		return *objs[i];
+		struct SList* Sprev, * Snext;
+		Sprev = head->prev; // узел, предшествующий head
+		Snext = head->next; // узел, следующий за head
+		for (int i = 0; i < (index - 1); i++)
+		{
+			if (Snext != NULL)
+			{
+				Sprev = Snext->prev;
+				Snext = Snext->next;
+			}
+		}
+		
+		struct SList* temp;
+		temp = Sprev->next;
+		if (Sprev != NULL)
+			Sprev->next = Snext; // переставляем указатель
+		if (Snext != NULL)
+			Snext->prev = Sprev; // переставляем указатель
+		delete temp->cobj;
+		free(temp);
 	}
-	int getCount()
+	void printlist()
 	{
-		return size;
+		struct SList* temp;
+		temp = head;
+		do {
+			temp->cobj->foo();
+			temp = temp->next;
+		} while (temp != NULL); // условие окончания обхода
 	}
 };
 
 void main()
 {
 	setlocale(LC_ALL, "RU");
-	// ������� ���������
-	MyStorage storage(10);
-	// ��������� � ���� �������
-	for (int i = 0; i < storage.getCount(); i++)
-		storage.setObject(i, new Point());
-	// ���������� ���������� �� ����
-	for (int i = 0; i < storage.getCount(); i++)
-		storage.getObject(i).draw();
+	MyStorage storage(new First());
+	for (int i = 1; i < 10; i++) 
+	{
+		storage.addObj(new First);
+	}
+	storage.printlist();
+	printf("\n");
+	storage.deleteObj(3);
+	storage.printlist();
+	/*for (int i = 0; !storage.eol(); storage.next())
+		storage.getObject().someMethod();*/
 }
