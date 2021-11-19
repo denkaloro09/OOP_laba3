@@ -15,7 +15,7 @@ class Basic //базовый абстрактный класс
 public: 
 	virtual void foo() 
 	{
-		printf("Basic");
+		printf_s("Basic");
 	}
 	virtual~Basic()
 	{
@@ -48,7 +48,7 @@ public:
 	}
 	void foo() override
 	{
-		printf("First options: %d,%d\n",x,y);
+		printf_s("First options: %d,%d\n",x,y);
 	}
 	~First()
 	{
@@ -79,7 +79,7 @@ public:
 
 	void foo() override
 	{
-		printf("Second element\n");
+		printf_s("Second element\n");
 	}
 	~Second()
 	{
@@ -210,40 +210,6 @@ public:
 			}
 		}
 	}
-	Basic* getObject(int index)
-	{
-		if (head != NULL) {
-
-			struct SList* Sprev, * Snext;
-			Sprev = head->prev; // узел, предшествующий head
-			Snext = head->next; // узел, следующий за head
-			Basic* temp;
-			for (int i = 1; i < index; i++)
-			{
-				if (Snext != NULL)
-				{
-					Sprev = Snext->prev; //двигаемся вперед по списку
-					Snext = Snext->next;
-				}
-			}
-			if (Snext == NULL && Sprev == NULL)
-			{
-				return head->cobj;
-			}
-			else if (Snext == NULL && Sprev != NULL)
-			{
-				return Sprev->next->cobj;
-			}
-			else
-			{
-				return Snext->prev->cobj;
-			}
-		} 
-		else 
-		{
-			return nullptr;
-		}
-	}
 	int getCount() //количество элементов
 	{
 		if (head != NULL)
@@ -281,7 +247,7 @@ public:
 		} 
 		else
 		{
-			printf("пусто!");
+			printf_s("пусто!");
 		}
 	}
 	void fooObj(int index)
@@ -313,14 +279,25 @@ public:
 			}
 		}
 	}
+	~MyStorage()
+	{
+		if (head != NULL)
+		{
+			int a = getCount();
+			for (int i = a; i > 0; i--)
+			{
+				deleteObj(i);
+			}
+		}
+	}
 };
 
 void main()
 {
 	srand(time(0));
 	setlocale(LC_ALL, "RU");
-	MyStorage storage(new Second());
-	for (int i = 1; i < 50; i++) 
+	MyStorage storage(new Second()); 
+	for (int i = 1; i < 50; i++) //заполнение хранилища
 	{
 		int d = rand();
 		if(d % 2 == 0)
@@ -332,10 +309,12 @@ void main()
 			storage.addObj(new Second, i);
 		}
 	}
+
 	storage.fooStorage();
-	printf("%d\n", storage.getCount());
-	unsigned int start_time = clock();
-	for(int i = 1; i < 100; i++)
+	printf_s("%d\n", storage.getCount());
+	unsigned int st = clock();
+
+	for(int i = 1; i < 100; i++) //100 раз
 	{
 		int a = rand() % 3;
 		int d = rand() % storage.getCount();
@@ -360,13 +339,77 @@ void main()
 			break;
 		}
 	}
-	unsigned int end_time = clock(); // конечное время
-	unsigned int search_time = end_time - start_time; // искомое время
-	unsigned int en_time = clock();
+
+	unsigned int et = clock(); // конечное время
+	unsigned int pst = et - st; // искомое время
 	storage.fooStorage();
-	printf("%d\n", storage.getCount());
-	printf("%d,%d\n",search_time,en_time);
-	Basic* p1 = storage.getObject(11);
-	p1->foo();
-	delete p1;
+	printf_s("%d\n", storage.getCount());
+	printf_s("%d\n", pst);
+	_getch();
+	st = clock();
+
+	for (int i = 1; i < 1000; i++)
+	{
+		int a = rand() % 3;
+		int d = rand() % storage.getCount();
+		switch (a)
+		{
+		case 0:
+			d = rand() % 2;
+			if (d == 0)
+			{
+				storage.addObj(new First, i);
+			}
+			else
+			{
+				storage.addObj(new Second, i);
+			}
+			break;
+		case 1:
+			storage.deleteObj(d);
+			break;
+		case 2:
+			storage.fooObj(d);
+			break;
+		}
+	}
+
+	et = clock(); // конечное время
+	pst = et - st; // искомое время
+	storage.fooStorage();
+	printf_s("%d\n", storage.getCount());
+	printf_s("%d\n", pst);
+	_getch();
+	st = clock();
+	for (int i = 1; i < 10000; i++) //10000 раз
+	{
+		int a = rand() % 3;
+		int d = rand() % storage.getCount();
+		switch (a)
+		{
+		case 0:
+			d = rand() % 2;
+			if (d == 0)
+			{
+				storage.addObj(new First, i);
+			}
+			else
+			{
+				storage.addObj(new Second, i);
+			}
+			break;
+		case 1:
+			storage.deleteObj(d);
+			break;
+		case 2:
+			storage.fooObj(d);
+			break;
+		}
+	}
+	et = clock(); // конечное время
+	pst = et - st; // искомое время
+	storage.fooStorage();
+	printf_s("%d\n", storage.getCount());
+	printf_s("%d\n", pst);
+	storage.~MyStorage();
  }
