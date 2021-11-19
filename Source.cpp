@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include <conio.h>
+#include <ctime>
 using namespace std;
 
 struct SList
@@ -16,6 +17,10 @@ public:
 	{
 		printf("Basic");
 	}
+	virtual~Basic()
+	{
+		//printf("удаление родителя\n");
+	}
 };
 
 class First : public Basic //первый потомок базового класса
@@ -26,6 +31,11 @@ public:
 	First()
 	{
 		x = 0; y = 0;
+	}
+	First(const First& f)
+	{
+		x = f.x;
+		y = f.y;
 	}
 	First(int x,int y)
 	{
@@ -39,6 +49,10 @@ public:
 	void foo() override
 	{
 		printf("First options: %d,%d\n",x,y);
+	}
+	~First()
+	{
+		//printf("удаление точки\n");
 	}
 };
 class Second : public Basic //второй потомок базового класса
@@ -57,14 +71,19 @@ public:
 		p1 = new First(x1, y1);
 		p2 = new First(x2, y2);
 	}
+	Second(const Second& s)
+	{
+		p1 = new First(*(s.p1));
+		p2 = new First(*(s.p2));
+	}
 
 	void foo() override
 	{
-		printf("отрезок\n");
+		printf("Second element\n");
 	}
 	~Second()
 	{
-		printf("удаление отрезка");
+		//printf("удаление отрезка\n");
 		delete p1;
 		delete p2;
 	}
@@ -97,7 +116,7 @@ public:
 	}
 	void addObj(Basic* obj,int index) //добавление объекта в список
 	{
-		if (index != 0) {
+		if (index != 0 && head != NULL) {
 			struct SList* Sprev, * Snext;
 			Sprev = head->prev; // узел, предшествующий head
 			Snext = head->next; // узел, следующий за head
@@ -133,10 +152,17 @@ public:
 				addToHead(obj);
 			}
 		}	
+		else
+		{
+			head = (struct SList*)malloc(sizeof(struct SList));
+			head->cobj = obj;
+			head->next = NULL; // указатель на следующий узел
+			head->prev = NULL; // указатель на предыдущий узел
+		}
 	}
 	void deleteObj(int index) //удаление объекта из списка
 	{
-		if (index != 0) {
+		if (index != 0 && head != NULL && index <= getCount()) {
 			struct SList* Sprev, * Snext;
 			Sprev = head->prev; // узел, предшествующий head
 			Snext = head->next; // узел, следующий за head
@@ -148,7 +174,15 @@ public:
 					Snext = Snext->next;
 				}
 			}
-			if (Sprev != NULL) //если удаляется не корень списка
+			if(Snext == NULL && Sprev != NULL) //удаление последнего элемента в списке
+			{
+				struct SList* temp;
+				temp = Sprev->next;
+				Sprev->next = NULL;
+				delete temp->cobj;
+				free(temp);
+			}
+			else if (Sprev != NULL && Snext != NULL) //удаление элемента внутри списка
 			{
 				struct SList* temp;
 				temp = Sprev->next;
@@ -159,66 +193,180 @@ public:
 				delete temp->cobj;
 				free(temp);
 			}
-			else //удаляется корень списка
+			else if(Snext !=  NULL && Sprev == NULL) //удаление корня списка
 			{
 				struct SList* temp;
 				temp = head->next;
+				temp->prev = NULL;
 				delete head->cobj;
 				free(head);   // освобождение памяти текущего корня
 				head = temp;
+			}
+			else //удаление корня, если он единственный член списка
+			{
+				delete head->cobj; //полное удаление списка
+				head = NULL;
+				free(head);
 			}
 		}
 	}
 	Basic* getObject(int index)
 	{
-		struct SList* Sprev, * Snext;
-		Sprev = head->prev; // узел, предшествующий head
-		Snext = head->next; // узел, следующий за head
-		for (int i = 1; i < index; i++)
-		{
-			if (Snext != NULL)
+		if (head != NULL) {
+
+			struct SList* Sprev, * Snext;
+			Sprev = head->prev; // узел, предшествующий head
+			Snext = head->next; // узел, следующий за head
+			Basic* temp;
+			for (int i = 1; i < index; i++)
 			{
-				Sprev = Snext->prev; //двигаемся вперед по списку
-				Snext = Snext->next;
+				if (Snext != NULL)
+				{
+					Sprev = Snext->prev; //двигаемся вперед по списку
+					Snext = Snext->next;
+				}
+			}
+			if (Snext == NULL && Sprev == NULL)
+			{
+				return head->cobj;
+			}
+			else if (Snext == NULL && Sprev != NULL)
+			{
+				return Sprev->next->cobj;
+			}
+			else
+			{
+				return Snext->prev->cobj;
+			}
+		} 
+		else 
+		{
+			return nullptr;
+		}
+	}
+	int getCount() //количество элементов
+	{
+		if (head != NULL)
+		{
+			int count = 1;
+			struct SList* Sprev, * Snext;
+			Sprev = head->prev; // узел, предшествующий head
+			Snext = head->next; // узел, следующий за head
+			for (int i = 1; Snext != NULL; i++)
+			{
+				if (Snext != NULL)
+				{
+					Sprev = Snext->prev; //двигаемся вперед по списку
+					Snext = Snext->next;
+					count++;
+				}
+			}
+			return count;
+		} 
+		else 
+		{
+			return 0;
+		}
+	}
+	void fooStorage()
+	{
+		if (head != NULL)
+		{
+			struct SList* temp;
+			temp = head;
+			do {
+				temp->cobj->foo();
+				temp = temp->next;
+			} while (temp != NULL); // условие окончания обхода
+		} 
+		else
+		{
+			printf("пусто!");
+		}
+	}
+	void fooObj(int index)
+	{
+		if (head != NULL) {
+
+			struct SList* Sprev, * Snext;
+			Sprev = head->prev; // узел, предшествующий head
+			Snext = head->next; // узел, следующий за head
+			for (int i = 1; i < index; i++)
+			{
+				if (Snext != NULL)
+				{
+					Sprev = Snext->prev; //двигаемся вперед по списку
+					Snext = Snext->next;
+				}
+			}
+			if (Snext == NULL && Sprev == NULL)
+			{
+				head->cobj->foo();
+			}
+			else if (Snext == NULL && Sprev != NULL)
+			{
+				Sprev->next->cobj->foo();
+			}
+			else
+			{
+				Snext->prev->cobj->foo();
 			}
 		}
-		return Snext->prev->cobj;
-	}
-	void printlist()
-	{
-		struct SList* temp;
-		temp = head;
-		do {
-			temp->cobj->foo();
-			temp = temp->next;
-		} while (temp != NULL); // условие окончания обхода
-	
 	}
 };
 
 void main()
 {
+	srand(time(0));
 	setlocale(LC_ALL, "RU");
 	MyStorage storage(new Second());
-	for (int i = 1; i < 4; i++) 
+	for (int i = 1; i < 50; i++) 
 	{
-		storage.addObj(new First,i);
+		int d = rand();
+		if(d % 2 == 0)
+		{
+			storage.addObj(new First, i);
+		} 
+		else 
+		{
+			storage.addObj(new Second, i);
+		}
 	}
-	storage.printlist();
-	printf("\n");
-	for(int i = 5;i<10;i++)
+	storage.fooStorage();
+	printf("%d\n", storage.getCount());
+	unsigned int start_time = clock();
+	for(int i = 1; i < 100; i++)
 	{
-		storage.addObj(new Second,i);
+		int a = rand() % 3;
+		int d = rand() % storage.getCount();
+		switch (a)
+		{
+		case 0:
+			d = rand() % 2;
+			if (d == 0)
+			{
+				storage.addObj(new First, i);
+			}
+			else
+			{
+				storage.addObj(new Second, i);
+			}
+			break;
+		case 1:
+			storage.deleteObj(d);
+			break;
+		case 2:
+			storage.fooObj(d);
+			break;
+		}
 	}
-	storage.printlist();
-	storage.deleteObj(5);
-	printf("\n");
-	storage.printlist();
-	storage.deleteObj(1);
-	storage.addObj(new First,7);
-	printf("\n");
-	storage.printlist();
-
-	/*for (int i = 0; !storage.eol(); storage.next())
-		storage.getObject().someMethod();*/
+	unsigned int end_time = clock(); // конечное время
+	unsigned int search_time = end_time - start_time; // искомое время
+	unsigned int en_time = clock();
+	storage.fooStorage();
+	printf("%d\n", storage.getCount());
+	printf("%d,%d\n",search_time,en_time);
+	Basic* p1 = storage.getObject(11);
+	p1->foo();
+	delete p1;
  }
