@@ -22,7 +22,6 @@ public:
 		//printf("удаление родителя\n");
 	}
 };
-
 class First : public Basic //первый потомок базового класса
 {
 protected:
@@ -151,6 +150,7 @@ public:
 			{
 				addToHead(obj);
 			}
+			printf_s("object added\n");
 		}	
 		else
 		{
@@ -158,6 +158,7 @@ public:
 			head->cobj = obj;
 			head->next = NULL; // указатель на следующий узел
 			head->prev = NULL; // указатель на предыдущий узел
+			printf_s("object added\n");
 		}
 	}
 	void deleteObj(int index) //удаление объекта из списка
@@ -208,6 +209,7 @@ public:
 				head = NULL;
 				free(head);
 			}
+			printf_s("object deleted\n");
 		}
 	}
 	int getCount() //количество элементов
@@ -238,6 +240,7 @@ public:
 	{
 		if (head != NULL)
 		{
+			printf_s("STORAGE:\n");
 			struct SList* temp;
 			temp = head;
 			do {
@@ -297,23 +300,26 @@ void main()
 	srand(time(0));
 	setlocale(LC_ALL, "RU");
 	MyStorage storage(new Second()); 
-	for (int i = 1; i < 50; i++) //заполнение хранилища
+	for (int i = 2; i < 71; i++) //заполнение хранилища
 	{
-		int d = rand();
-		if(d % 2 == 0)
+		int d = rand() % 2;
+		switch (d)
 		{
+		case 0:
 			storage.addObj(new First, i);
-		} 
-		else 
-		{
+			break;
+		case 1:
 			storage.addObj(new Second, i);
+			break;
+		default:
+			break;
 		}
 	}
 
 	storage.fooStorage();
 	printf_s("%d\n", storage.getCount());
+	_getch();
 	unsigned int st = clock();
-
 	for(int i = 1; i < 100; i++) //100 раз
 	{
 		int a = rand() % 3;
@@ -355,8 +361,7 @@ void main()
 		switch (a)
 		{
 		case 0:
-			d = rand() % 2;
-			if (d == 0)
+			if (rand() % 2 == 0)
 			{
 				storage.addObj(new First, i);
 			}
@@ -388,8 +393,7 @@ void main()
 		switch (a)
 		{
 		case 0:
-			d = rand() % 2;
-			if (d == 0)
+			if (rand() % 2 == 0)
 			{
 				storage.addObj(new First, i);
 			}
@@ -411,5 +415,6 @@ void main()
 	storage.fooStorage();
 	printf_s("%d\n", storage.getCount());
 	printf_s("%d\n", pst);
+	_getch();
 	storage.~MyStorage();
  }
